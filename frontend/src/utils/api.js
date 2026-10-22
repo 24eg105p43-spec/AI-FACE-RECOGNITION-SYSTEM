@@ -1,6 +1,6 @@
 // API Utility layer connecting React frontend to Express backend
 
-const API_BASE = ''; // Uses Vite proxy in development
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 function getAuthHeader() {
   const token = localStorage.getItem('faculty_token');
@@ -36,6 +36,20 @@ export async function loginFaculty(email, password) {
   return request('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password })
+  });
+}
+
+export async function registerFaculty(payload) {
+  return request('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function resetFacultyPassword(email, newPassword) {
+  return request('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, newPassword })
   });
 }
 

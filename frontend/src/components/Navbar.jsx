@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Bell, Clock, User, LogOut, QrCode, ExternalLink } from 'lucide-react';
+import { ShieldCheck, Bell, Clock, User, LogOut, QrCode, ExternalLink, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getSuspiciousAlerts } from '../utils/api';
 
-export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwitchToStudentDemo }) {
+export default function Navbar({ 
+  onOpenQRModal, 
+  onOpenAlerts, 
+  alertCount, 
+  onSwitchToStudentDemo,
+  onToggleMobileSidebar 
+}) {
   const { user, logout } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
@@ -15,67 +20,91 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
   }, []);
 
   return (
-    <header style={{
-      height: '72px',
+    <header className="navbar-header" style={{
+      minHeight: '70px',
       background: '#ffffff',
       borderBottom: '1px solid var(--neutral-200)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '0 32px',
+      padding: '0 clamp(14px, 3vw, 32px)',
       position: 'sticky',
       top: 0,
       zIndex: 40,
-      boxShadow: 'var(--shadow-sm)'
+      boxShadow: 'var(--shadow-sm)',
+      gap: '12px'
     }}>
-      {/* Brand & System Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* Left: Mobile Menu Toggle & Brand */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Hamburger button for mobile */}
+        <button
+          onClick={onToggleMobileSidebar}
+          className="mobile-menu-btn"
+          title="Open Navigation Menu"
+          style={{
+            background: 'var(--neutral-100)',
+            border: '1px solid var(--neutral-200)',
+            borderRadius: '10px',
+            width: '38px',
+            height: '38px',
+            display: 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: 'var(--neutral-700)'
+          }}
+        >
+          <Menu size={20} />
+        </button>
+
         <div style={{
-          width: '42px',
-          height: '42px',
+          width: '40px',
+          height: '40px',
           borderRadius: '12px',
           background: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)'
+          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+          flexShrink: 0
         }}>
-          <ShieldCheck size={26} />
+          <ShieldCheck size={24} />
         </div>
         <div>
           <h1 style={{
-            fontSize: '1.25rem',
+            fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
             fontWeight: 800,
             background: 'linear-gradient(90deg, #1e3a8a, #2563eb)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            margin: 0
+            margin: 0,
+            whiteSpace: 'nowrap'
           }}>
-            AI Attendance Dashboard
+            AI Attendance
           </h1>
-          <p style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', margin: 0, fontWeight: 500 }}>
-            Smart Biometric Recognition & Timetable System
+          <p className="navbar-subtitle" style={{ fontSize: '0.725rem', color: 'var(--neutral-500)', margin: 0, fontWeight: 500 }}>
+            Biometrics & Timetable System
           </p>
         </div>
       </div>
 
       {/* Right Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* System Clock */}
-        <div style={{
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 14px)', flexWrap: 'wrap' }}>
+        {/* System Clock (visible on desktop/tablet) */}
+        <div className="navbar-clock" style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
           background: 'var(--neutral-100)',
-          padding: '6px 14px',
+          padding: '6px 12px',
           borderRadius: 'var(--radius-full)',
-          fontSize: '0.85rem',
+          fontSize: '0.8rem',
           fontWeight: 600,
           color: 'var(--neutral-700)',
           border: '1px solid var(--neutral-200)'
         }}>
-          <Clock size={15} color="var(--primary-600)" />
+          <Clock size={14} color="var(--primary-600)" />
           <span style={{ fontFamily: 'var(--font-mono)' }}>{currentTime}</span>
         </div>
 
@@ -86,8 +115,8 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
           title="Open Student Scanner Interface"
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <ExternalLink size={15} />
-          <span>Student Scanner View</span>
+          <ExternalLink size={14} />
+          <span className="navbar-scanner-text">Scanner View</span>
         </button>
 
         {/* Launch Attendance QR Button */}
@@ -96,8 +125,8 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
           className="btn btn-primary btn-sm"
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <QrCode size={16} />
-          <span>Launch QR Session</span>
+          <QrCode size={15} />
+          <span className="navbar-launch-text">Launch QR</span>
         </button>
 
         {/* Anti-Spoof Alert Bell */}
@@ -107,19 +136,20 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
             position: 'relative',
             background: alertCount > 0 ? 'var(--accent-red-bg)' : 'var(--neutral-100)',
             border: `1px solid ${alertCount > 0 ? 'var(--accent-red-border)' : 'var(--neutral-200)'}`,
-            borderRadius: '12px',
-            width: '40px',
-            height: '40px',
+            borderRadius: '10px',
+            width: '36px',
+            height: '36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             color: alertCount > 0 ? 'var(--accent-red)' : 'var(--neutral-600)',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            flexShrink: 0
           }}
           title={`${alertCount} Security Alerts`}
         >
-          <Bell size={18} />
+          <Bell size={17} />
           {alertCount > 0 && (
             <span style={{
               position: 'absolute',
@@ -128,10 +158,10 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
               background: 'var(--accent-red)',
               color: '#ffffff',
               borderRadius: '50%',
-              fontSize: '0.7rem',
+              fontSize: '0.65rem',
               fontWeight: 700,
-              width: '18px',
-              height: '18px',
+              width: '16px',
+              height: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -142,40 +172,40 @@ export default function Navbar({ onOpenQRModal, onOpenAlerts, alertCount, onSwit
           )}
         </button>
 
-        {/* Faculty User Profile & Logout */}
-
+        {/* Real Faculty User Profile & Logout */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '10px',
           paddingLeft: '8px',
           borderLeft: '1px solid var(--neutral-200)'
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px'
+            gap: '8px'
           }}>
             <div style={{
-              width: '38px',
-              height: '38px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
-              background: 'var(--primary-100)',
+              background: 'linear-gradient(135deg, var(--primary-100), var(--primary-200))',
               color: 'var(--primary-800)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
-              fontSize: '0.9rem'
+              fontSize: '0.9rem',
+              border: '1px solid var(--primary-300)'
             }}>
-              {user?.name ? user.name.charAt(0) : 'P'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'F'}
             </div>
-            <div style={{ display: 'none', md: 'block' }}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-900)' }}>
-                {user?.name || 'Prof. Sharma'}
+            <div className="navbar-user-info">
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--neutral-900)', lineHeight: 1.2 }}>
+                {user?.name || 'Faculty Member'}
               </div>
-              <div style={{ fontSize: '0.725rem', color: 'var(--neutral-500)' }}>
-                {user?.department || 'Computer Science'}
+              <div style={{ fontSize: '0.725rem', color: 'var(--neutral-500)', lineHeight: 1.2 }}>
+                {user?.department || 'Academic Staff'}
               </div>
             </div>
           </div>

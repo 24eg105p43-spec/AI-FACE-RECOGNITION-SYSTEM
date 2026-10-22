@@ -18,9 +18,15 @@ function makeEmbedding(seedNumber) {
 }
 
 async function seedData() {
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+    console.error('⚠️ [CRITICAL GUARD] Seeding demo data is blocked in production mode to protect real users.');
+    console.error('   If you explicitly want to run this, pass the --force flag: node src/seed.js --force');
+    process.exit(1);
+  }
+
   await connectDB();
 
-  console.log('[Seed] Clearing existing collections...');
+  console.log('[Seed] Clearing demo collections...');
   await Faculty.deleteMany({});
   await Student.deleteMany({});
   await Timetable.deleteMany({});

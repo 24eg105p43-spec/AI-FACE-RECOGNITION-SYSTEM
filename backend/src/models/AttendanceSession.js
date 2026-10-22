@@ -57,4 +57,6 @@ const attendanceSessionSchema = new mongoose.Schema({
   }
 });
 
+attendanceSessionSchema.index({ isActive: 1, expiresAt: 1 });
+
 module.exports = mongoose.model('AttendanceSession', attendanceSessionSchema);

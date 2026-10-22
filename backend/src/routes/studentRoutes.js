@@ -56,7 +56,9 @@ router.post(['/register', '/register-student'], protectFaculty, async (req, res)
         department: newStudent.department,
         semester: newStudent.semester,
         registeredAt: newStudent.registeredAt,
-        antiSpoofCheck: aiResult.anti_spoof
+        antiSpoofCheck: aiResult.anti_spoof,
+        landmarks: aiResult.landmarks,
+        faceBox: aiResult.face_box
       }
     });
   } catch (err) {

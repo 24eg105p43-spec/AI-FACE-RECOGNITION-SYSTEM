@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginFaculty, getFacultyMe } from '../utils/api';
+import { loginFaculty, registerFaculty, getFacultyMe } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -42,6 +42,17 @@ export function AuthProvider({ children }) {
     throw new Error('Authentication failed');
   };
 
+  const register = async (userData) => {
+    const data = await registerFaculty(userData);
+    if (data && data.token) {
+      localStorage.setItem('faculty_token', data.token);
+      setToken(data.token);
+      setUser(data.faculty);
+      return data;
+    }
+    throw new Error('Registration failed');
+  };
+
   const logout = () => {
     localStorage.removeItem('faculty_token');
     setToken(null);
@@ -55,6 +66,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: !!token && !!user,
       loading,
       login,
+      register,
       logout
     }}>
       {children}

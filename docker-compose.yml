@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: attendance_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - attendance_net
+
+  # 2. Python AI Face Recognition & Anti-Spoof Microservice
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: attendance_ai_service
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+    networks:
+      - attendance_net
+
+  # 3. Express & Node.js Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: attendance_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/ai_face_attendance
+      - JWT_SECRET=super_secret_faculty_jwt_key_2026_secure_key
+      - QR_SECRET=super_secret_qr_session_jwt_key_2026_secure_key
+      - AI_SERVICE_URL=http://ai-service:5001
+      - CAMPUS_LAT=12.9716
+      - CAMPUS_LNG=77.5946
+      - CAMPUS_RADIUS_METERS=500
+      - DEFAULT_SESSION_DURATION_MINUTES=10
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+      - ai-service
+    networks:
+      - attendance_net
+
+  # 4. React Vite Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: attendance_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - attendance_net
+
+volumes:
+  mongo_data:
+
+networks:
+  attendance_net:
+    driver: bridge

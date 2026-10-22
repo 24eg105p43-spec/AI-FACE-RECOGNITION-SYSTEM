@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./src/config/db');
 const { startTimerJob } = require('./src/services/timerService');
 
@@ -13,14 +14,25 @@ const timetableRoutes = require('./src/routes/timetableRoutes');
 
 const app = express();
 
+// Trust reverse proxy for deployment (e.g. Render, Railway, Nginx)
+app.set('trust proxy', 1);
+
 // Connect to Database
 connectDB();
 
-// CORS Configuration
+// Security Headers (Helmet) - configured for cross-origin base64 image streams
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false
+}));
+
+// CORS Configuration with environment override
+const allowedOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({
-  origin: '*',
+  origin: allowedOrigin === '*' ? '*' : allowedOrigin.split(','),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 // Body Parser Middleware (support high-resolution base64 face snapshots)
@@ -55,16 +67,16 @@ app.get('/api/health', (req, res) => {
     database: 'MongoDB',
     aiServiceUrl: process.env.AI_SERVICE_URL || 'http://127.0.0.1:5001',
     campusCoords: {
-      lat: process.env.CAMPUS_LAT || 12.9716,
-      lng: process.env.CAMPUS_LNG || 77.5946,
-      radiusMeters: process.env.CAMPUS_RADIUS_METERS || 500
+      lat: Number(process.env.CAMPUS_LAT) || 12.9716,
+      lng: Number(process.env.CAMPUS_LNG) || 77.5946,
+      radiusMeters: Number(process.env.CAMPUS_RADIUS_METERS) || 500
     }
   });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('[Global Error]', err.stack);
+  console.error('[Global Error]', err.stack || err.message);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',
@@ -73,6 +85,23 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[Backend Server] AI Face Attendance Backend running on http://localhost:${PORT}`);
 });
+
+// Graceful Shutdown Handler
+function handleGracefulShutdown(signal) {
+  console.log(`\n[Server] Received ${signal}. Gracefully shutting down...`);
+  server.close(() => {
+    console.log('[Server] HTTP server closed.');
+    process.exit(0);
+  });
+  // Force exit if hanging
+  setTimeout(() => {
+    console.error('[Server] Force shutdown timeout reached.');
+    process.exit(1);
+  }, 5000);
+}
+
+process.on('SIGINT', () => handleGracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => handleGracefulShutdown('SIGTERM'));

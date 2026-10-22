@@ -167,7 +167,8 @@ router.post('/scan-face', validateStudentSession, async (req, res) => {
         timestamp: attendanceRecord.timestamp,
         confidence: attendanceRecord.confidence,
         spoofScore: attendanceRecord.spoofScore,
-        location: attendanceRecord.location
+        location: attendanceRecord.location,
+        landmarks: verificationResult.landmarks
       }
     });
   } catch (err) {

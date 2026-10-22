@@ -60,5 +60,7 @@ const attendanceSchema = new mongoose.Schema({
 
 // Index to avoid duplicate 'Present' log for the same student in the same session
 attendanceSchema.index({ studentId: 1, sessionId: 1 }, { unique: true });
+attendanceSchema.index({ timestamp: -1 });
+attendanceSchema.index({ subject: 1, status: 1 });
 
 module.exports = mongoose.model('Attendance', attendanceSchema);

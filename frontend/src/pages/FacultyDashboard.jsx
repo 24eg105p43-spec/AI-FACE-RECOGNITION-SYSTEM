@@ -36,6 +36,7 @@ import {
 export default function FacultyDashboard({ onSwitchToStudentDemo }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Data states
   const [students, setStudents] = useState([]);
@@ -121,6 +122,8 @@ export default function FacultyDashboard({ onSwitchToStudentDemo }) {
         setActiveTab={setActiveTab}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
       />
 
       {/* Main Content Area */}
@@ -131,6 +134,7 @@ export default function FacultyDashboard({ onSwitchToStudentDemo }) {
           onOpenAlerts={() => setIsAlertsOpen(true)}
           alertCount={alerts.length}
           onSwitchToStudentDemo={onSwitchToStudentDemo}
+          onToggleMobileSidebar={() => setMobileOpen(!mobileOpen)}
         />
 
         <div className="dashboard-page-container">
