@@ -199,14 +199,28 @@ export default function StudentScanner() {
     startCamera(nextMode);
   };
 
+  // Ensure camera stream is attached whenever video element is available
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && videoRef.current.srcObject !== streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraActive, tokenError, attendanceResult]);
+
   const triggerFaceScan = async () => {
     if (!videoRef.current || isScanning) return;
+    const video = videoRef.current;
+
+    // Guard against uninitialized video feed
+    if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
+      setErrorMessage('Camera feed is still warming up. Please wait 1-2 seconds and try again.');
+      return;
+    }
+
     setIsScanning(true);
     setErrorMessage(null);
 
     try {
       // 1. Capture current video frame into high-res canvas
-      const video = videoRef.current;
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
@@ -525,7 +539,12 @@ export default function StudentScanner() {
           justifyContent: 'center'
         }}>
           <video
-            ref={videoRef}
+            ref={(node) => {
+              videoRef.current = node;
+              if (node && streamRef.current && node.srcObject !== streamRef.current) {
+                node.srcObject = streamRef.current;
+              }
+            }}
             autoPlay
             playsInline
             muted

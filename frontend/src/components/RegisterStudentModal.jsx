@@ -38,6 +38,12 @@ export default function RegisterStudentModal({ isOpen, onClose, onStudentAdded }
     return () => stopCamera();
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current && videoRef.current.srcObject !== streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraActive]);
+
   const startCamera = async () => {
     setCameraError(null);
     try {
@@ -75,12 +81,20 @@ export default function RegisterStudentModal({ isOpen, onClose, onStudentAdded }
 
   const captureSnapshot = () => {
     if (!videoRef.current) return;
+    const video = videoRef.current;
+    if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
+      setErrorMsg('Camera stream is still starting. Please wait 1-2 seconds and try again.');
+      return;
+    }
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 640;
-    canvas.height = videoRef.current.videoHeight || 480;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    // Mirror snapshot horizontally to match user selfie preview
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     setCapturedImage(dataUrl);
     stopCamera();
   };
@@ -257,7 +271,12 @@ export default function RegisterStudentModal({ isOpen, onClose, onStudentAdded }
                     />
                   ) : isCameraActive ? (
                     <video
-                      ref={videoRef}
+                      ref={(node) => {
+                        videoRef.current = node;
+                        if (node && streamRef.current && node.srcObject !== streamRef.current) {
+                          node.srcObject = streamRef.current;
+                        }
+                      }}
                       autoPlay
                       playsInline
                       muted
